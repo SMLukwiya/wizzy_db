@@ -33,3 +33,15 @@ static BNODE *createNode(bool isLeaf) {
 
     return newNode;
 }
+
+/* Create B+ tree */
+BPTREE *create_tree() {
+    BPTREE *tree = (BPTREE *)malloc(sizeof(BPTREE));
+    if (!tree) {
+        perror("Failed to allocate memory for tree");
+        exit(EXIT_FAILURE);
+    }
+
+    tree->root = 0;
+    tree->next_page_offset = 0;
+}

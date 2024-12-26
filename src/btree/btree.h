@@ -47,6 +47,6 @@ typedef struct BPTREE {
     int (*insert)(struct BTREE *, uint64 key, uint64 value_offset);
     int (*del)(struct BTREE *, uint64 key);
     uint64 (*search)(struct BTREE *, uint64 key, bool *found);
-} BTREE;
+} BPTREE;
 
 #endif
