@@ -44,4 +44,6 @@ BPTREE *create_tree() {
 
     tree->root = 0;
     tree->next_page_offset = 0;
+
+    return tree;
 }
