@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+/* Create a new B+ tree node */
 static BNODE *createNode(bool isLeaf) {
     int i;
     BNODE *newNode = (BNODE *)malloc(sizeof(BNODE));

@@ -37,16 +37,16 @@ typedef struct BNODE {
     };
 } BNODE;
 
-typedef struct BTREE {
+typedef struct BPTREE {
     /* Offset to root node on disk */
     uint64 root;
     /* Offset to next available/free block on disk */
     uint64 next_page_offset;
 
     /* APIS */
-    uint64 (*insert)(struct BTREE *, uint64 key, uint64 value_offset);
-    void (*del)(struct BTREE *, uint64 key);
-    uint64 (*search)(struct BTREE *, uint64 key);
+    int (*insert)(struct BTREE *, uint64 key, uint64 value_offset);
+    int (*del)(struct BTREE *, uint64 key);
+    uint64 (*search)(struct BTREE *, uint64 key, bool *found);
 } BTREE;
 
 #endif
