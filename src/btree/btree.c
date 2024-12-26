@@ -36,12 +36,8 @@ static BNODE *create_node(bool isLeaf) {
 }
 
 /* Split child node that is full */
-void split_child(BPTREE *tree, BNODE *parent, int index) {
-    BNODE *childNode;
+BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     int i;
-    /* retrieve child node to split */
-    uint64 childNodeOffset = parent->bInternal.child_offsets[index];
-    load_node(childNodeOffset, childNode);
 
     BNODE *newNode = create_node(childNode->isLeaf);
     newNode->offset = tree->next_page_offset;
@@ -95,8 +91,56 @@ void split_child(BPTREE *tree, BNODE *parent, int index) {
     save_node(newNode->offset, newNode);
     save_node(parent->offset, parent);
 
-    free(childNode);
-    free(newNode);
+    return newNode;
+}
+
+void insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) {
+    BNODE *node = *childNode;
+    BNODE *newNode;
+    int numOfKeys = node->numOfKeys;
+    int i = numOfKeys;
+
+    if (node->isLeaf) { // TODO: check numOfKeys from initial caller and split from caller if needed
+        /* Shift node keys and data_offsets to make room for new key */
+        while (i > 0 && node->bLeaf.keys[i - 1] > key) {
+            node->bLeaf.keys[i] = node->bLeaf.keys[i - 1];
+            node->bLeaf.data_offsets[i] = node->bLeaf.data_offsets[i - 1];
+            i--;
+        }
+        node->bLeaf.keys[i] = key;
+        node->bLeaf.data_offsets[i] = offset;
+        node->numOfKeys++;
+    } else {
+        /* Search for correct position of child node */
+        while (i > 0 && node->bInternal.keys[i - 1] > key) {
+            i--;
+        }
+
+        uint64 childNodeOffset = node->bInternal.child_offsets[i];
+        // BNODE *childNode;
+        load_node(childNodeOffset, *childNode);
+        int maxKeys = (*childNode)->isLeaf ? M : M - 1;
+
+        /* split child */
+        if ((*childNode)->numOfKeys == maxKeys) {
+            newNode = split_child(tree, node, *childNode, i);
+
+            /* Check if position in parent is correct after promoting middle child key */
+            if (node->bInternal.keys[i] < key) {
+                /* switch child node to point to correct node where insert should continue */
+                *childNode = newNode;
+            }
+        }
+
+        insert_non_full(tree, childNode, key, offset);
+
+        /* If new node is created during current split
+         * Free it only once
+         */
+        if (*childNode == newNode) {
+            free(newNode);
+        }
+    }
 }
 
 /* Create B+ tree */
