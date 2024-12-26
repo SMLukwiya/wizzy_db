@@ -1,22 +1,33 @@
 #include "btree.h"
 
-#include <ctype.h>
-#include <errno.h>
 #include <stdlib.h>
 
 static BNODE *createNode(bool isLeaf) {
     int i;
     BNODE *newNode = (BNODE *)malloc(sizeof(BNODE));
     if (!newNode) {
-        perror("Failed to allocate newNode memory");
-        exit(-1);
+        perror("Failed to allocate memory for newNode");
+        exit(EXIT_FAILURE);
     }
 
-    newNode->numOfKeys = (size_key)0;
+    newNode->numOfKeys = 0;
     newNode->isLeaf = isLeaf;
+    newNode->offset = 0;
 
-    for (i = 0; i < M; i++) {
-        newNode->children[i] = NULL;
+    /* Zero out keys and children offsets */
+    if (isLeaf) {
+        for (i = 0; i < M; i++) {
+            newNode->bLeaf.keys[i] = 0;
+            newNode->bLeaf.data_offsets[i] = 0;
+        }
+        newNode->bLeaf.next_offset = 0;
+    } else {
+        for (i = 0; i < M - 1; i++) {
+            newNode->bInternal.keys[i] = 0;
+        }
+        for (i = 0; i < M; i++) {
+            newNode->bInternal.child_offsets[i] = 0;
+        }
     }
 
     return newNode;
