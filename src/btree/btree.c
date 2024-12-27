@@ -9,7 +9,7 @@ static BNODE *create_node(bool isLeaf) {
     BNODE *newNode = (BNODE *)malloc(sizeof(BNODE));
     if (!newNode) {
         perror("Failed to allocate memory for newNode");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     newNode->numOfKeys = 0;
@@ -18,16 +18,16 @@ static BNODE *create_node(bool isLeaf) {
 
     /* Zero out keys and children offsets */
     if (isLeaf) {
-        for (i = 0; i < M; i++) {
+        for (i = 0; i < MAX_KEYS; i++) {
             newNode->bLeaf.keys[i] = 0;
             newNode->bLeaf.data_offsets[i] = 0;
         }
         newNode->bLeaf.next_offset = 0;
     } else {
-        for (i = 0; i < M - 1; i++) {
+        for (i = 0; i < MAX_KEYS - 1; i++) {
             newNode->bInternal.keys[i] = 0;
         }
-        for (i = 0; i < M; i++) {
+        for (i = 0; i < MAX_KEYS; i++) {
             newNode->bInternal.child_offsets[i] = 0;
         }
     }
@@ -40,16 +40,21 @@ BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     int i;
 
     BNODE *newNode = create_node(childNode->isLeaf);
+    if (!newNode) {
+        perror("Failed to allocate memory for new node");
+        return NULL;
+    }
+
     newNode->offset = tree->next_page_offset;
 
-    int middleIndex = M / 2;
+    int middleIndex = MAX_KEYS / 2;
     /* Leaf nodes retain all keys after split
      * Internal nodes remove middle key from child and places in parent
      * Therefore one less key is retained
      */
     newNode->numOfKeys = newNode->isLeaf ? middleIndex : middleIndex - 1;
     /* move next_page_offset to next free space by M */
-    tree->next_page_offset += 4096;
+    tree->next_page_offset += BTREE_MAX_PAGE_SIZE;
 
     /* Copy keys and child offsets to new node */
     for (i = 0; i < newNode->numOfKeys; i++) {
@@ -57,8 +62,8 @@ BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
             newNode->bLeaf.keys[i] = childNode->bLeaf.keys[i + middleIndex];
             newNode->bLeaf.data_offsets[i] = childNode->bLeaf.data_offsets[i + middleIndex];
         } else {
-            newNode->bInternal.keys[i] = childNode->bInternal.keys[i + M / 2];
-            newNode->bInternal.child_offsets[i] = childNode->bInternal.child_offsets[i + M / 2];
+            newNode->bInternal.keys[i] = childNode->bInternal.keys[i + MAX_KEYS / 2];
+            newNode->bInternal.child_offsets[i] = childNode->bInternal.child_offsets[i + MAX_KEYS / 2];
         }
     }
     childNode->numOfKeys = childNode->isLeaf ? middleIndex : middleIndex - 1;
@@ -87,20 +92,29 @@ BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     parent->bInternal.child_offsets[index + 1] = newNode->offset;
 
     /* Persist update to disk */
-    save_node(childNode->offset, childNode);
-    save_node(newNode->offset, newNode);
-    save_node(parent->offset, parent);
+    if (save_node(childNode) != 0) {
+        free(newNode);
+        return NULL;
+    }
+    if (save_node(newNode) != 0) {
+        free(newNode);
+        return NULL;
+    }
+    if (save_node(parent) != 0) {
+        free(newNode);
+        return NULL;
+    }
 
     return newNode;
 }
 
-void insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) {
+int insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) {
     BNODE *node = *childNode;
-    BNODE *newNode;
+    BNODE *newNode = NULL;
     int numOfKeys = node->numOfKeys;
     int i = numOfKeys;
 
-    if (node->isLeaf) { // TODO: check numOfKeys from initial caller and split from caller if needed
+    if (node->isLeaf) {
         /* Shift node keys and data_offsets to make room for new key */
         while (i > 0 && node->bLeaf.keys[i - 1] > key) {
             node->bLeaf.keys[i] = node->bLeaf.keys[i - 1];
@@ -117,13 +131,17 @@ void insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset)
         }
 
         uint64 childNodeOffset = node->bInternal.child_offsets[i];
-        // BNODE *childNode;
-        load_node(childNodeOffset, *childNode);
-        int maxKeys = (*childNode)->isLeaf ? M : M - 1;
+        if (load_node(childNodeOffset, *childNode) != 0) {
+            return -1;
+        }
+        int maxKeys = (*childNode)->isLeaf ? MAX_KEYS : MAX_KEYS - 1;
 
         /* split child */
         if ((*childNode)->numOfKeys == maxKeys) {
             newNode = split_child(tree, node, *childNode, i);
+            if (!newNode) {
+                return -1;
+            }
 
             /* Check if position in parent is correct after promoting middle child key */
             if (node->bInternal.keys[i] < key) {
@@ -132,15 +150,93 @@ void insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset)
             }
         }
 
-        insert_non_full(tree, childNode, key, offset);
+        int result = insert_non_full(tree, childNode, key, offset);
+        if (result != 0) {
+            return result;
+        }
+    }
 
-        /* If new node is created during current split
-         * Free it only once
-         */
-        if (*childNode == newNode) {
+    /* Free new node if it was created during current split */
+    if (newNode != NULL) {
+        free(newNode);
+    }
+
+    return 0;
+}
+
+int insert(BPTREE *tree, uint64 key, uint64 offset) {
+    uint64 rootOffset = tree->root;
+    BNODE *node;
+
+    /* If tree is empty, insert and return */
+    if (rootOffset == 0) {
+        node = create_node(true);
+        if (!node) {
+            return -1;
+        }
+        node->bLeaf.keys[0] = key;
+        node->bLeaf.data_offsets[0] = offset;
+        node->numOfKeys = 1;
+        node->offset = tree->next_page_offset;
+        tree->next_page_offset += BTREE_MAX_PAGE_SIZE;
+        tree->root = node->offset;
+
+        /* Persist to disk */
+        if (save_node(node) != 0) {
+            free(node);
+            return -2;
+        }
+
+        /* node is part of tree, therefore no call to free */
+        return 0;
+    }
+
+    node = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
+    if (!node) {
+        return -1;
+    }
+    if (load_node(rootOffset, node) != 0) {
+        free(node);
+        return -2;
+    }
+
+    /* Check if rootNode is full */
+    if (node->numOfKeys == MAX_KEYS - 1) {
+        /* Create new root to hold promoted key */
+        BNODE *newRoot = create_node(false);
+        if (!newRoot) {
+            free(node);
+            return -1;
+        }
+
+        newRoot->offset = tree->next_page_offset;
+        newRoot->bInternal.child_offsets[0] = node->offset;
+        tree->next_page_offset += BTREE_MAX_PAGE_SIZE;
+        tree->root = newRoot->offset;
+        BNODE *newNode = split_child(tree, newRoot, node, 0);
+        if (!newNode) {
+            free(newRoot);
+            free(node);
+            return -1;
+        }
+
+        /* Check which child node should receive new key */
+        if (newRoot->bInternal.keys[0] < key) {
+            free(node);
+            node = newNode;
+        } else {
             free(newNode);
         }
     }
+
+    insert_non_full(tree, &node, key, offset);
+    if (save_node(node) != 0) {
+        free(node);
+        return -2;
+    }
+
+    free(node);
+    return 0;
 }
 
 /* Create B+ tree */

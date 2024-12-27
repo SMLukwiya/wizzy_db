@@ -3,7 +3,7 @@
 
 #include "btree.h"
 
-void load_node(uint64 offset, BNODE *);
-void save_node(uint64 offset, BNODE *);
+int load_node(uint64 offset, BNODE *);
+int save_node(BNODE *);
 
 #endif

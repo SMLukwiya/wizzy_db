@@ -7,19 +7,19 @@
 /* Page/Block size 4KB */
 #define BTREE_MAX_PAGE_SIZE 4096
 /* Degree of tree/Maximum number of children */
-#define M 200
+#define MAX_KEYS 200
 
 typedef __uint8_t uint8;
 typedef __uint64_t uint64;
 
 typedef struct BNODE_INTERNAL {
-    uint64 keys[M - 1];
-    uint64 child_offsets[M];
+    uint64 keys[MAX_KEYS - 1];
+    uint64 child_offsets[MAX_KEYS];
 } BNODE_INTERNAL;
 
 typedef struct BNODE_LEAF {
-    uint64 keys[M];
-    uint64 data_offsets[M];
+    uint64 keys[MAX_KEYS];
+    uint64 data_offsets[MAX_KEYS];
     /* Offset to next node */
     uint64 next_offset;
 } BNODE_LEAF;
