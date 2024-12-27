@@ -2,6 +2,7 @@
 #include "pager.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 /* Create a new B+ tree node */
 static BNODE *create_node(bool isLeaf) {
@@ -12,25 +13,9 @@ static BNODE *create_node(bool isLeaf) {
         return NULL;
     }
 
-    newNode->numOfKeys = 0;
-    newNode->isLeaf = isLeaf;
-    newNode->offset = 0;
+    memset(newNode, 0, BTREE_MAX_PAGE_SIZE);
 
-    /* Zero out keys and children offsets */
-    if (isLeaf) {
-        for (i = 0; i < MAX_KEYS; i++) {
-            newNode->bLeaf.keys[i] = 0;
-            newNode->bLeaf.data_offsets[i] = 0;
-        }
-        newNode->bLeaf.next_offset = 0;
-    } else {
-        for (i = 0; i < MAX_KEYS - 1; i++) {
-            newNode->bInternal.keys[i] = 0;
-        }
-        for (i = 0; i < MAX_KEYS; i++) {
-            newNode->bInternal.child_offsets[i] = 0;
-        }
-    }
+    newNode->isLeaf = isLeaf;
 
     return newNode;
 }
@@ -238,6 +223,11 @@ int insert(BPTREE *tree, uint64 key, uint64 offset) {
     free(node);
     return 0;
 }
+
+int delete(BPTREE *tree, uint64 key) {
+}
+
+BNODE *search() {}
 
 /* Create B+ tree */
 BPTREE *create_tree() {
