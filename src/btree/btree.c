@@ -13,6 +13,7 @@ static BNODE *create_node(bool isLeaf) {
         return NULL;
     }
 
+    /* Zero out the memory */
     memset(newNode, 0, BTREE_MAX_PAGE_SIZE);
 
     newNode->isLeaf = isLeaf;
@@ -224,10 +225,63 @@ int insert(BPTREE *tree, uint64 key, uint64 offset) {
     return 0;
 }
 
-int delete(BPTREE *tree, uint64 key) {
+int search_node(BNODE *startNode, uint64 key, BNODE **returnNode) {
+
+    if (startNode->isLeaf) {
+        int left = 0, right = startNode->numOfKeys - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (startNode->bLeaf.keys[mid] == key) {
+                uint64 offset = startNode->bLeaf.data_offsets[mid];
+                if (load_node(offset, *returnNode) != 0) {
+                    return -1;
+                }
+                return 0;
+            } else if (startNode->bLeaf.keys[mid] < key) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return -1;
+    }
+
+    int i = startNode->numOfKeys - 1;
+
+    /* Get correct child node position to search */
+    while (i > 0 && startNode->bInternal.keys[i - 1] > key) {
+        i--;
+    }
+
+    uint64 childOffset = startNode->bInternal.child_offsets[i];
+    BNODE *childNode = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
+    if (load_node(childOffset, startNode) != 0) {
+        return -1;
+    }
+
+    return search_node(startNode, key, returnNode);
 }
 
-BNODE *search() {}
+int delete(BPTREE *tree, uint64 key) {
+    uint64 rootOffset = tree->root;
+    if (rootOffset == 0) {
+        return 0;
+    }
+
+    BNODE *node = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
+    if (load_node(rootOffset, node) != 0) {
+        free(node);
+        return -1;
+    }
+
+    uint64 nodeOffset;
+    int i;
+    if (node->isLeaf) {
+        //
+        for (i = 0; i < node->numOfKeys; i++) {
+        }
+    }
+}
 
 /* Create B+ tree */
 BPTREE *create_tree() {

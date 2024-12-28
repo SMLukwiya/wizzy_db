@@ -1,6 +1,7 @@
 #include "pager.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 /* Read node from disk to node structure
  * starting at beginning of file
@@ -29,7 +30,7 @@ int load_node(uint64 offset, BNODE *node) {
     return 0;
 }
 
-void save_node(BNODE *node) {
+int save_node(BNODE *node) {
     const char *db = "./data/db";
     FILE *fd = fopen(db, 'r+b');
 
@@ -46,6 +47,12 @@ void save_node(BNODE *node) {
 
     if (fwrite(node, BTREE_MAX_PAGE_SIZE, 1, fd) != 1) {
         perror("Failed to write node to disk");
+        fclose(fd);
+        return -1;
+    }
+
+    if (fsync(fd) != 0) {
+        perror("Error synchronizing data with disk");
         fclose(fd);
         return -1;
     }
