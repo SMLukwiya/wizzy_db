@@ -1,6 +1,8 @@
 #ifndef __MEM_ALLOCATOR_H
 #define __MEM_ALLOCATOR_H
 
+#include <stdbool.h>
+
 /* 99 MBs */
 #define MAX_POOL 99 * (1 << 20)
 
@@ -8,6 +10,8 @@
 
 /* Segregated List */
 typedef struct SEGREGATED_LIST {
+    /* Pointer to original memory pool (for freeing) */
+    void *memoryPoolPtr;
     /* Pointer to head of free list */
     BLOCK *freeListHeadPtr;
     /* Size of each block in the list */
