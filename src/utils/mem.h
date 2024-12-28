@@ -8,6 +8,8 @@
 
 #define ALIGNMENT 8
 
+typedef __uint32_t uint32;
+
 /* Segregated List */
 typedef struct SEGREGATED_LIST {
     /* Pointer to original memory pool (for freeing) */
@@ -15,11 +17,11 @@ typedef struct SEGREGATED_LIST {
     /* Pointer to head of free list */
     BLOCK *freeListHeadPtr;
     /* Size of each block in the list */
-    int blockSize;
+    uint32 blockSize;
     /* Total number of blocks */
-    int totalBlocks;
+    uint32 totalBlocks;
     /* Number of free blocks */
-    int freeBlocks;
+    uint32 freeBlocks;
 } SEGREGATED_LIST;
 //
 

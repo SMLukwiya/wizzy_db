@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 /* Initialize Seg list */
-int seg_list_init(SEGREGATED_LIST *list, int blockSize, int numOfBlocks) {
+int seg_list_init(SEGREGATED_LIST *list, uint32 blockSize, uint32 numOfBlocks) {
     /* Validate inputs */
     if (blockSize < 1 || numOfBlocks < 1 || !list) {
         return -1;
@@ -62,9 +62,11 @@ BLOCK *allocate_block(SEGREGATED_LIST *list) {
         return NULL;
     }
 
+    /* Try to extend memory pool */
     if (list->freeBlocks == 0) {
-        // extend block by a factor later
-        return NULL;
+        if (extend_mem_pool(list) != 0) {
+            return NULL;
+        }
     }
 
     /* Allocate block and update free list */
@@ -76,10 +78,56 @@ BLOCK *allocate_block(SEGREGATED_LIST *list) {
     return block;
 }
 
-void *deallocate_block(SEGREGATED_LIST *list, BLOCK *block) {
+/* Deallocate block and update free list */
+void deallocate_block(SEGREGATED_LIST *list, BLOCK *block) {
     block->isFree = 1;
 
     block->next = list->freeListHeadPtr;
     list->freeListHeadPtr = block;
     list->freeBlocks++;
+}
+
+/* Expands memory x2 */
+int extend_mem_pool(SEGREGATED_LIST *list) {
+    uint32 currentSize = list->blockSize * list->totalBlocks;
+    if (currentSize >= MAX_POOL) {
+        return -1;
+    }
+
+    /* Extend to max pool currentSize */
+    uint32 newSize = (currentSize * 2) > MAX_POOL ? MAX_POOL : currentSize * 2;
+    /* New added number of blocks */
+    int addedBlocks = (newSize - currentSize) / list->blockSize;
+
+    /* Reallocate new memory pool */
+    void *newMemoryPool = realloc(list->memoryPoolPtr, newSize);
+    if (!newMemoryPool) {
+        return -1;
+    }
+
+    /* Update free list to add new blocks */
+    BLOCK *firstBlockOnOldList = (BLOCK *)((char *)newMemoryPool + currentSize);
+
+    /* Initialize new blocks */
+    BLOCK *currentBlock = firstBlockOnOldList;
+
+    for (int i = 0; i < addedBlocks; i++) {
+        currentBlock->isFree = 1;
+        if (i < addedBlocks - 1) {
+            currentBlock->next = (BLOCK *)((char *)currentBlock + list->blockSize);
+        } else {
+            currentBlock->next = NULL;
+        }
+        currentBlock = currentBlock->next;
+    }
+
+    /* Update seg list */
+    list->memoryPoolPtr = newMemoryPool;
+    /* Since we call it when we exhaust current pool
+     * We can point free list to the first new block;
+     */
+    list->freeListHeadPtr = firstBlockOnOldList;
+    list->freeBlocks += addedBlocks;
+    list->totalBlocks += addedBlocks;
+    return 0;
 }
