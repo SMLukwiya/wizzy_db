@@ -32,7 +32,7 @@ int load_node(uint64 offset, BNODE *node) {
 
 int save_node(BNODE *node) {
     const char *db = "./data/db";
-    FILE *fd = fopen(db, 'r+b');
+    FILE *fd = fopen(db, "r+b");
 
     if (!fd) {
         perror("Failed to open database file for write action");
@@ -51,7 +51,7 @@ int save_node(BNODE *node) {
         return -1;
     }
 
-    if (fsync(fd) != 0) {
+    if (fsync(fileno(fd)) != 0) {
         perror("Error synchronizing data with disk");
         fclose(fd);
         return -1;

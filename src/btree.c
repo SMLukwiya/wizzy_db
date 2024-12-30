@@ -1,12 +1,13 @@
 #include "btree.h"
 #include "pager.h"
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /* Create a new B+ tree node */
 static BNODE *create_node(bool isLeaf) {
-    int i;
     BNODE *newNode = (BNODE *)malloc(sizeof(BNODE));
     if (!newNode) {
         perror("Failed to allocate memory for newNode");
@@ -254,7 +255,7 @@ int search_node(BNODE *startNode, uint64 key, BNODE **returnNode) {
     }
 
     uint64 childOffset = startNode->bInternal.child_offsets[i];
-    BNODE *childNode = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
+    // BNODE *childNode = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
     if (load_node(childOffset, startNode) != 0) {
         return -1;
     }
@@ -274,13 +275,14 @@ int delete(BPTREE *tree, uint64 key) {
         return -1;
     }
 
-    uint64 nodeOffset;
+    // uint64 nodeOffset;
     int i;
     if (node->isLeaf) {
         //
         for (i = 0; i < node->numOfKeys; i++) {
         }
     }
+    return 0;
 }
 
 /* Create B+ tree */

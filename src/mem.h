@@ -1,6 +1,7 @@
 #ifndef __MEM_ALLOCATOR_H
 #define __MEM_ALLOCATOR_H
 
+#include <ctype.h>
 #include <stdbool.h>
 
 /* 99 MBs */
@@ -9,6 +10,12 @@
 #define ALIGNMENT 8
 
 typedef __uint32_t uint32;
+
+/* Block */
+typedef struct BLOCK {
+    bool isFree;
+    struct BLOCK *next;
+} BLOCK;
 
 /* Segregated List */
 typedef struct SEGREGATED_LIST {
@@ -25,12 +32,6 @@ typedef struct SEGREGATED_LIST {
 } SEGREGATED_LIST;
 //
 
-/* Block */
-typedef struct BLOCK {
-    bool isFree;
-    BLOCK *next;
-} BLOCK;
-
 typedef struct MEMORY_POOL {
     // coalescing when blocks are free (reducing fragmentation)
     // Splitting larger blocks according to request
@@ -42,5 +43,9 @@ typedef struct MEMORY_POOL {
     // - Thread Safety
     // Minimise memory frag (buddy allocation/segregated list)
 } MEMORY_POOL;
+
+/* APIS */
+int seg_list_init(SEGREGATED_LIST *, uint32, uint32);
+int extend_mem_pool(SEGREGATED_LIST *list);
 
 #endif

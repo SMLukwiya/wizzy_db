@@ -44,9 +44,9 @@ typedef struct BPTREE {
     uint64 next_page_offset;
 
     /* APIS */
-    int (*insert)(struct BTREE *, uint64 key, uint64 value_offset);
-    int (*del)(struct BTREE *, uint64 key);
-    uint64 (*search)(struct BTREE *, uint64 key, bool *found);
+    int (*insert)(struct BPTREE *, uint64 key, uint64 value_offset);
+    int (*del)(struct BPTREE *, uint64 key);
+    uint64 (*search)(struct BPTREE *, uint64 key, bool *found);
 } BPTREE;
 
 #endif

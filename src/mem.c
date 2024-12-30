@@ -3,6 +3,8 @@
 #include "mem.h"
 #include "btree.h"
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /* Initialize Seg list */
