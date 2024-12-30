@@ -61,6 +61,7 @@ extern int test_count;
 #define ASSERT_NOT_EQUAL(expected, actual, message) ASSERT(((expected) != (actual)), __FILE__, __LINE__, message)
 #define ASSERT_INT_EQUAL(expected, actual, message) assert_equal_number((expected), (actual), __FILE__, __LINE__, (message))
 #define ASSERT_TRUE(condition, message) ASSERT((condition), __FILE__, __LINE__, (message))
+#define ASSERT_FALSE(condition, message) ASSERT(!(condition), __FILE__, __LINE__, (message))
 
 /* APIS */
 void test_fail(int line, const char *file, const char *message);

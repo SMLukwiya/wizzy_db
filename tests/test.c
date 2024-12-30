@@ -16,6 +16,9 @@ TEST testDetail;
         ABORT_TEST();                     \
     } while (0)
 
+const char *Bold = "\x1B[1m";
+const char *Bold_off = "\x1B[m";
+
 const char *TestStrPass = "\x1B[1;32mPASS\x1B[0m";
 const char *TestStrFail = "\x1B[1;31mFAIL\x1B[0m";
 
@@ -24,7 +27,8 @@ const char *TestStrActual = " Received: ";
 
 /* Print test results format */
 void printTestResult(const char *file, const int line) {
-    printf("%s:%d: %s: ", file, line, testDetail.currentTestName);
+    /* Bold the test func metadata */
+    printf("%s%s:%d: %s%s: ", Bold, file, line, testDetail.currentTestName, Bold_off);
 }
 
 /* Print passing test results format */
