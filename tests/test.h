@@ -57,8 +57,8 @@ extern int test_count;
 
 #define ASSERT_NULL(pointer, message) ASSERT((pointer == NULL), __FILE__, __LINE__, message)
 #define ASSERT_NOT_NULL(pointer, message) ASSERT((pointer != NULL), __FILE__, __LINE__, message)
-#define ASSERT_EQUAL(expected, actual, message)
-#define ASSERT_NOT_EQUAL(expected, actual, message)
+#define ASSERT_EQUAL(expected, actual, message) ASSERT(((expected) == (actual)), __FILE__, __LINE__, message)
+#define ASSERT_NOT_EQUAL(expected, actual, message) ASSERT(((expected) != (actual)), __FILE__, __LINE__, message)
 #define ASSERT_INT_EQUAL(expected, actual, message) assert_equal_number((expected), (actual), __LINE__, __FILE__, (message))
 
 /* APIS */

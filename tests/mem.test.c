@@ -31,13 +31,11 @@ TEST_CASE(test_allocation) {
     ASSERT_INT_EQUAL(list.freeBlocks, 8, NULL);
     ASSERT_NOT_NULL(block1, NULL);
     ASSERT_NOT_NULL(block2, NULL);
-    // ASSERT_EQUAL(block1 != block2);
+    ASSERT_NOT_EQUAL(block1, block2, NULL);
 
     // Verify blocks are within memory pool
     // assert(block1 >= list.memoryPool && block1 < (void *)((char *)list.memoryPool + list.blockSize * list.totalBlocks));
     // assert(block2 >= list.memoryPool && block2 < (void *)((char *)list.memoryPool + list.blockSize * list.totalBlocks));
-
-    printf("Allocation test passed!\n");
 }
 
 ADD_TEST(test_seg_list_init);
