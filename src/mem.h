@@ -45,7 +45,8 @@ typedef struct MEMORY_POOL {
 } MEMORY_POOL;
 
 /* APIS */
-int seg_list_init(SEGREGATED_LIST *, uint32, uint32);
+int seg_list_init(SEGREGATED_LIST *list, uint32 blockSize, uint32 numOfBlocks);
 int extend_mem_pool(SEGREGATED_LIST *list);
+BLOCK *allocate_block(SEGREGATED_LIST *list);
 
 #endif

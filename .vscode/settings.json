@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "mem.h": "c",
+        "btree.h": "c"
     }
 }
