@@ -33,7 +33,7 @@ void printTestStatus(const char *status) {
 }
 
 /* Test int number */
-void assert_equal_number(const int expected, const int actual, const int line, const char *file, const char *msg) {
+void assert_equal_number(const int expected, const int actual, const char *file, const int line, const char *msg) {
     if (expected != actual) {
         printTestResult(file, line);
         printTestStatus(TestStrFail);

@@ -28,7 +28,7 @@ extern const char *test_names[];
 extern int test_count;
 
 #define MAX_TESTS 100
-#define TEST_FAIL(line, file, message) test_fail((line), file, (message))
+#define TEST_FAIL(line, file, message) test_fail((line), (file), (message))
 #define TEST_CASE(name) void name()
 #define OUTPUT_FLUSH() (void)fflush(stdout)
 #define ABORT_TEST() return
@@ -59,11 +59,12 @@ extern int test_count;
 #define ASSERT_NOT_NULL(pointer, message) ASSERT((pointer != NULL), __FILE__, __LINE__, message)
 #define ASSERT_EQUAL(expected, actual, message) ASSERT(((expected) == (actual)), __FILE__, __LINE__, message)
 #define ASSERT_NOT_EQUAL(expected, actual, message) ASSERT(((expected) != (actual)), __FILE__, __LINE__, message)
-#define ASSERT_INT_EQUAL(expected, actual, message) assert_equal_number((expected), (actual), __LINE__, __FILE__, (message))
+#define ASSERT_INT_EQUAL(expected, actual, message) assert_equal_number((expected), (actual), __FILE__, __LINE__, (message))
+#define ASSERT_TRUE(condition, message) ASSERT((condition), __FILE__, __LINE__, (message))
 
 /* APIS */
 void test_fail(int line, const char *file, const char *message);
 void printTestResult(const char *file, const int line);
-void assert_equal_number(const int, const int, const int, const char *, const char *);
+void assert_equal_number(const int expected, const int actual, const char *file, const int line, const char *msg);
 
 #endif
