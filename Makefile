@@ -54,8 +54,6 @@ $(OBJ_DIR)/wizzydb.a: $(SRC_OBJS_EXCLUDE_MAIN_FUNC)
 
 # Link lib in test
 $(OBJ_DIR)/testBin: $(TEST_OBJS) $(OBJ_DIR)/wizzydb.a
-	@echo "Linking"
-	@echo $($^)
 	$(CC) $^ -o $@
 
 test: $(OBJ_DIR)/testBin
