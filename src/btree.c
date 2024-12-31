@@ -1,4 +1,5 @@
 #include "btree.h"
+#include "mem.h"
 #include "pager.h"
 
 #include <errno.h>
@@ -7,15 +8,12 @@
 #include <string.h>
 
 /* Create a new B+ tree node */
-static BNODE *create_node(bool isLeaf) {
-    BNODE *newNode = (BNODE *)malloc(sizeof(BNODE));
+static BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf) {
+    BNODE *newNode = (BNODE *)allocate_block(list);
     if (!newNode) {
         perror("Failed to allocate memory for newNode");
         return NULL;
     }
-
-    /* Zero out the memory */
-    memset(newNode, 0, BTREE_MAX_PAGE_SIZE);
 
     newNode->isLeaf = isLeaf;
 
@@ -23,10 +21,10 @@ static BNODE *create_node(bool isLeaf) {
 }
 
 /* Split child node that is full */
-BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
+BNODE *split_child(SEGREGATED_LIST *list, BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     int i;
 
-    BNODE *newNode = create_node(childNode->isLeaf);
+    BNODE *newNode = create_node(list, childNode->isLeaf);
     if (!newNode) {
         perror("Failed to allocate memory for new node");
         return NULL;
@@ -95,7 +93,7 @@ BNODE *split_child(BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     return newNode;
 }
 
-int insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) {
+int insert_non_full(SEGREGATED_LIST *list, BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) {
     BNODE *node = *childNode;
     BNODE *newNode = NULL;
     int numOfKeys = node->numOfKeys;
@@ -125,7 +123,7 @@ int insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) 
 
         /* split child */
         if ((*childNode)->numOfKeys == maxKeys) {
-            newNode = split_child(tree, node, *childNode, i);
+            newNode = split_child(list, tree, node, *childNode, i);
             if (!newNode) {
                 return -1;
             }
@@ -137,7 +135,7 @@ int insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) 
             }
         }
 
-        int result = insert_non_full(tree, childNode, key, offset);
+        int result = insert_non_full(list, tree, childNode, key, offset);
         if (result != 0) {
             return result;
         }
@@ -151,13 +149,13 @@ int insert_non_full(BPTREE *tree, BNODE **childNode, uint64 key, uint64 offset) 
     return 0;
 }
 
-int insert(BPTREE *tree, uint64 key, uint64 offset) {
+int insert(SEGREGATED_LIST *list, BPTREE *tree, uint64 key, uint64 offset) {
     uint64 rootOffset = tree->root;
     BNODE *node;
 
     /* If tree is empty, insert and return */
     if (rootOffset == 0) {
-        node = create_node(true);
+        node = create_node(list, true);
         if (!node) {
             return -1;
         }
@@ -190,7 +188,7 @@ int insert(BPTREE *tree, uint64 key, uint64 offset) {
     /* Check if rootNode is full */
     if (node->numOfKeys == MAX_KEYS - 1) {
         /* Create new root to hold promoted key */
-        BNODE *newRoot = create_node(false);
+        BNODE *newRoot = create_node(list, false);
         if (!newRoot) {
             free(node);
             return -1;
@@ -200,7 +198,7 @@ int insert(BPTREE *tree, uint64 key, uint64 offset) {
         newRoot->bInternal.child_offsets[0] = node->offset;
         tree->next_page_offset += BTREE_MAX_PAGE_SIZE;
         tree->root = newRoot->offset;
-        BNODE *newNode = split_child(tree, newRoot, node, 0);
+        BNODE *newNode = split_child(list, tree, newRoot, node, 0);
         if (!newNode) {
             free(newRoot);
             free(node);
@@ -216,7 +214,7 @@ int insert(BPTREE *tree, uint64 key, uint64 offset) {
         }
     }
 
-    insert_non_full(tree, &node, key, offset);
+    insert_non_full(list, tree, &node, key, offset);
     if (save_node(node) != 0) {
         free(node);
         return -2;

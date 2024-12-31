@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Initialize Seg list */
 int seg_list_init(SEGREGATED_LIST *list, uint32 blockSize, uint32 numOfBlocks) {
@@ -59,7 +60,7 @@ int deallocate_mem_pool(SEGREGATED_LIST *list) {
 }
 
 /* Allocate block */
-BLOCK *allocate_block(SEGREGATED_LIST *list) {
+void *allocate_block(SEGREGATED_LIST *list) {
     if (!list->freeListHeadPtr) {
         return NULL;
     }
@@ -73,11 +74,13 @@ BLOCK *allocate_block(SEGREGATED_LIST *list) {
 
     /* Allocate block and update free list */
     BLOCK *block = list->freeListHeadPtr;
+    /* Reset memory */
+    memset(block->data, 0, BNODE_MAX_SIZE);
     block->isFree = 0;
     list->freeListHeadPtr = block->next;
     list->freeBlocks--;
 
-    return block;
+    return (void *)block->data;
 }
 
 /* Deallocate block and update free list */

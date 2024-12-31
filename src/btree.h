@@ -4,8 +4,9 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-/* Page/Block size 4KB */
+/* Block size 4KB */
 #define BTREE_MAX_PAGE_SIZE 4096
+#define BNODE_MAX_SIZE (BTREE_MAX_PAGE_SIZE - (sizeof(bool) + sizeof(void *)))
 /* Degree of tree/Maximum number of children */
 #define MAX_KEYS 200
 
@@ -25,7 +26,7 @@ typedef struct BNODE_LEAF {
 } BNODE_LEAF;
 
 typedef struct BNODE {
-    /* grouping 1 bytes together could minimize padding due to alignment constraints */
+    /* number of keys */
     uint8 numOfKeys;
     /* 0 for internal, 1 for leaf */
     uint8 isLeaf;

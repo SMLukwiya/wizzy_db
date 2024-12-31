@@ -7,14 +7,14 @@
 /* 99 MBs */
 #define MAX_POOL 99 * (1 << 20)
 
-#define ALIGNMENT 8
-
 typedef __uint32_t uint32;
 
 /* Block */
 typedef struct BLOCK {
     bool isFree;
     struct BLOCK *next;
+    /* node section */
+    char data[];
 } BLOCK;
 
 /* Segregated List */
@@ -30,25 +30,12 @@ typedef struct SEGREGATED_LIST {
     /* Number of free blocks */
     uint32 freeBlocks;
 } SEGREGATED_LIST;
-//
-
-typedef struct MEMORY_POOL {
-    // coalescing when blocks are free (reducing fragmentation)
-    // Splitting larger blocks according to request
-    // MEMORY LIMITS
-    // - Max pool size
-    // - Max Block Size
-    // - Alignment (alignof())
-    // - Stats -- #allocation, #delocations, cur mem usage, peak mem usage
-    // - Thread Safety
-    // Minimise memory frag (buddy allocation/segregated list)
-} MEMORY_POOL;
 
 /* APIS */
 int seg_list_init(SEGREGATED_LIST *list, uint32 blockSize, uint32 numOfBlocks);
 int extend_mem_pool(SEGREGATED_LIST *list);
-BLOCK *allocate_block(SEGREGATED_LIST *list);
+void *allocate_block(SEGREGATED_LIST *list);
 int deallocate_mem_pool(SEGREGATED_LIST *list);
-int deallocate_block(SEGREGATED_LIST *list, BLOCK *block);
+void deallocate_block(SEGREGATED_LIST *list, BLOCK *block);
 
 #endif
