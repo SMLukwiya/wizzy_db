@@ -53,5 +53,6 @@ typedef struct BPTREE {
 
 /*  */
 BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf);
+BPTREE *create_tree();
 
 #endif

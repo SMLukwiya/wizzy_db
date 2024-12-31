@@ -11,4 +11,11 @@ TEST_CASE(test_create_node) {
     ASSERT_INT_EQUAL(list.freeBlocks, 4, NULL);
 }
 
+TEST_CASE(test_create_tree) {
+    BPTREE *tree = create_tree();
+    ASSERT_EQUAL(tree->root, 0, NULL);
+    ASSERT_EQUAL(tree->next_page_offset, 0, NULL);
+}
+
 ADD_TEST(test_create_node);
+ADD_TEST(test_create_tree);
