@@ -8,7 +8,7 @@
 #include <string.h>
 
 /* Create a new B+ tree node */
-static BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf) {
+BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf) {
     BNODE *newNode = (BNODE *)allocate_block(list);
     if (!newNode) {
         perror("Failed to allocate memory for newNode");

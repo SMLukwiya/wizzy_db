@@ -1,6 +1,7 @@
 #ifndef BTREE_H
 #define BTREE_H
 
+#include "mem.h"
 #include <ctype.h>
 #include <stdbool.h>
 
@@ -49,5 +50,8 @@ typedef struct BPTREE {
     int (*del)(struct BPTREE *, uint64 key);
     uint64 (*search)(struct BPTREE *, uint64 key, bool *found);
 } BPTREE;
+
+/*  */
+BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf);
 
 #endif
