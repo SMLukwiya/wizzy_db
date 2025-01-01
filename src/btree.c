@@ -20,6 +20,11 @@ BNODE *create_node(SEGREGATED_LIST *list, bool isLeaf) {
     return newNode;
 }
 
+/* Free node in block */
+void free_node(SEGREGATED_LIST *list, BNODE *node) {
+    deallocate_block(list, (BLOCK *)node);
+}
+
 /* Split child node that is full */
 BNODE *split_child(SEGREGATED_LIST *list, BPTREE *tree, BNODE *parent, BNODE *childNode, int index) {
     int i;
@@ -168,7 +173,7 @@ int insert(SEGREGATED_LIST *list, BPTREE *tree, uint64 key, uint64 offset) {
 
         /* Persist to disk */
         if (save_node(node) != 0) {
-            free(node);
+            free_node(list, node);
             return -2;
         }
 
@@ -176,12 +181,12 @@ int insert(SEGREGATED_LIST *list, BPTREE *tree, uint64 key, uint64 offset) {
         return 0;
     }
 
-    node = (BNODE *)malloc(BTREE_MAX_PAGE_SIZE);
+    node = (BNODE *)allocate_block(list);
     if (!node) {
         return -1;
     }
     if (load_node(rootOffset, node) != 0) {
-        free(node);
+        free_node(list, node);
         return -2;
     }
 
@@ -190,7 +195,7 @@ int insert(SEGREGATED_LIST *list, BPTREE *tree, uint64 key, uint64 offset) {
         /* Create new root to hold promoted key */
         BNODE *newRoot = create_node(list, false);
         if (!newRoot) {
-            free(node);
+            free_node(list, node);
             return -1;
         }
 
@@ -200,27 +205,27 @@ int insert(SEGREGATED_LIST *list, BPTREE *tree, uint64 key, uint64 offset) {
         tree->root = newRoot->offset;
         BNODE *newNode = split_child(list, tree, newRoot, node, 0);
         if (!newNode) {
-            free(newRoot);
-            free(node);
+            free_node(list, newRoot);
+            free_node(list, node);
             return -1;
         }
 
         /* Check which child node should receive new key */
         if (newRoot->bInternal.keys[0] < key) {
-            free(node);
+            free_node(list, node);
             node = newNode;
         } else {
-            free(newNode);
+            free_node(list, newNode);
         }
     }
 
     insert_non_full(list, tree, &node, key, offset);
     if (save_node(node) != 0) {
-        free(node);
+        free_node(list, node);
         return -2;
     }
 
-    free(node);
+    free_node(list, node);
     return 0;
 }
 

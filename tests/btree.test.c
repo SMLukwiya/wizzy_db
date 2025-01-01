@@ -17,5 +17,13 @@ TEST_CASE(test_create_tree) {
     ASSERT_EQUAL(tree->next_page_offset, 0, NULL);
 }
 
+TEST_CASE(test_insert_key_empty) {
+    SEGREGATED_LIST list;
+    seg_list_init(&list, 4096, 5);
+    BPTREE *tree = create_tree();
+
+    insert(&list, tree, 1, 1);
+}
+
 ADD_TEST(test_create_node);
 ADD_TEST(test_create_tree);

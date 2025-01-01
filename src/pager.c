@@ -7,7 +7,7 @@
  * starting at beginning of file
  */
 int load_node(uint64 offset, BNODE *node) {
-    const char *db = "./data/db";
+    const char *db = "../data/db";
     FILE *fd = fopen(db, "rb");
     if (!fd) {
         perror("Failed to open database file");
@@ -31,7 +31,7 @@ int load_node(uint64 offset, BNODE *node) {
 }
 
 int save_node(BNODE *node) {
-    const char *db = "./data/db";
+    const char *db = "../data/db";
     FILE *fd = fopen(db, "r+b");
 
     if (!fd) {
